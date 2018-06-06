@@ -35,9 +35,10 @@
     <p>Read here <a href="https://github.com/martio/adretail" target="_blank">https://github.com/martio/adretail</a> to get more info.</p>
 
     <form method="POST">
+        {{ csrf_field() }}
         <div class="form-group">
             <label for="jobs">Jobs:</label>
-            <textarea class="form-control" rows="5" id="jobs"></textarea>
+            <textarea class="form-control" rows="5" id="jobs" name="jobs">{{$text}}</textarea>
         </div>
         <button class="btn btn-success" type="submit">Submit</button>
     </form>
