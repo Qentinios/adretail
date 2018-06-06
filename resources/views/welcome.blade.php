@@ -28,17 +28,26 @@
 
 <!-- Begin page content -->
 <div class="container">
+
     <div class="page-header">
         <h1>Adretail challenge</h1>
     </div>
+
+    @if (Session::has('error'))
+        <div class="alert alert-danger">{{ Session::get('error') }}</div>
+        {{ Session::forget('error') }}
+    @elseif(Session::has('success'))
+        <div class="alert alert-success">{{ Session::get('success') }}</div>
+        {{ Session::forget('success') }}
+    @endif
     <p class="lead">This is my own implementation of AdRetail challenge.</p>
-    <p>Read here <a href="https://github.com/martio/adretail" target="_blank">https://github.com/martio/adretail</a> to get more info.</p>
+    <p>Click here <a href="https://github.com/martio/adretail" target="_blank">https://github.com/martio/adretail</a> to get more info.</p>
 
     <form method="POST">
         {{ csrf_field() }}
         <div class="form-group">
             <label for="jobs">Jobs:</label>
-            <textarea class="form-control" rows="5" id="jobs" name="jobs">{{$text}}</textarea>
+            <textarea class="form-control" rows="5" id="jobs" name="jobs">@if(!empty($text)){{$text}}@endif</textarea>
         </div>
         <button class="btn btn-success" type="submit">Submit</button>
     </form>

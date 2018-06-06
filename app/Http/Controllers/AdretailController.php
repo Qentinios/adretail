@@ -3,20 +3,156 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Session;
 
 class AdretailController extends Controller
 {
     /**
-     * Gets jobs from text, returns them in order
+     * Gets jobs from text, returns in order
      * @param Request $request
      * @return string
      */
     public function make(Request $request){
         $input = $request->input("jobs");
 
+        $jobs = $this->getJobsArray($input);
+
+        if(!$jobs) {
+            $request->session()->flash('error', 'Wrong format!');
+
+            return view('welcome', ['text' => $input]);
+        }
+
+        if($this->areJobsDependOnThemselves($jobs)){
+            $request->session()->flash('error', 'Jobs can’t depend on themselves!');
+
+            return view('welcome', ['text' => $input]);
+        }
+
+        if($this->areJobsCircular($jobs)){
+            $request->session()->flash('error', 'Jobs can’t have circular dependencies!');
+
+            return view('welcome', ['text' => $input]);
+        }
+
+
         // test
+        dd($this->orderJobs($jobs));
         $text = $input;
 
+        $request->session()->flash('success', 'Success!');
+
         return view('welcome', ['text' => $text]);
+    }
+
+    /**
+     * Get jobs array from text
+     * @param $text
+     * @return array
+     */
+    protected function getJobsArray($text){
+        $jobs = [];
+
+        preg_match_all('/([a-z]) ?=> ?([a-z])?/', $text, $matches, PREG_SET_ORDER);
+
+        // wrong format
+        if(empty($matches[0])){
+            return null;
+        }
+
+        foreach($matches as $match){
+            $jobs[$match[1]] = isset($match[2]) ? $match[2] : "";
+        }
+
+        return $jobs;
+    }
+
+    private function orderJobs($jobs)
+    {
+        // create array of "a b c d e f"
+        $order = array_keys($jobs);
+
+        // loop thought all jobs
+        foreach($jobs as $job=>$pre){
+
+            // if job has predecessor
+            if(!empty($pre) && in_array($pre, $order)){
+
+                // position of job
+                $offsetJob = array_search($job, $order);
+
+                // array with predecessor as tmp before job
+                $order = $this->arrayInsertBefore($offsetJob, $order, 'tmp');
+
+
+                // find offset of old predecessor we copied
+                $offsetPre = array_search($pre, $order);
+
+                // remove it
+                unset($order[$offsetPre]);
+
+                // change tmp to actual predecessor
+                $offsetTmp = array_search('tmp', $order);
+                $order[$offsetTmp] = $pre;
+            }
+        }
+
+        return $order;
+    }
+
+    /**
+     * Inserts a new value before the key in the array.
+     *
+     * The key to insert before.
+     *  @param $key
+     * An array to insert in to.
+     *  @param array $array
+     * An value to insert.
+     *  @param $new_value
+     * The new array if the key exists, FALSE otherwise.
+     *  @return array|false
+     */
+    private function arrayInsertBefore($key, array $array, $new_value) {
+        if (array_key_exists($key, $array)) {
+            $i = 0;
+            $new = array();
+            foreach ($array as $k => $value) {
+                if ($k === $key) {
+                    $new[$i] = $new_value;
+                    $i++;
+                }
+                $new[$i] = $value;
+
+                $i++;
+            }
+            return $new;
+        }
+        return false;
+    }
+
+    /**
+     * Check if jobs have circular dependencies
+     * @param $jobs
+     * @return bool
+     */
+    private function areJobsCircular($jobs){
+        // TODO
+        return false;
+    }
+
+    /**
+     * Check if jobs depend on themselves
+     * @param $jobs
+     * @return bool
+     */
+    private function areJobsDependOnThemselves($jobs)
+    {
+        foreach($jobs as $job => $pre){
+            if($job == $pre){
+                return true;
+            }
+        }
+
+        return false;
     }
 }
