@@ -2,11 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use App\Service\AdretailService;
 use Illuminate\Http\Request;
 use Session;
 
 class AdretailController extends Controller
 {
+    protected $adretailService;
+
+    public function __construct(AdretailService $adretailService)
+    {
+        $this->adretailService = $adretailService;
+    }
+
     /**
      * Gets jobs from text, returns in order
      * @param Request $request
@@ -35,14 +43,11 @@ class AdretailController extends Controller
             return view('welcome', ['text' => $input]);
         }
 
+        $jobsOrdered = $this->orderJobs($jobs);
 
-        // test
-        dd($this->orderJobs($jobs));
-        $text = $input;
+        $request->session()->flash('success', $this->adretailService->arrayToString($jobsOrdered));
 
-        $request->session()->flash('success', 'Success!');
-
-        return view('welcome', ['text' => $text]);
+        return view('welcome', ['text' => $input]);
     }
 
     /**
@@ -50,7 +55,7 @@ class AdretailController extends Controller
      * @param $text
      * @return array
      */
-    protected function getJobsArray($text){
+    private function getJobsArray($text){
         $jobs = [];
 
         preg_match_all('/([a-z]) ?=> ?([a-z])?/', $text, $matches, PREG_SET_ORDER);
@@ -82,7 +87,7 @@ class AdretailController extends Controller
                 $offsetJob = array_search($job, $order);
 
                 // array with predecessor as tmp before job
-                $order = $this->arrayInsertBefore($offsetJob, $order, 'tmp');
+                $order = $this->adretailService->arrayInsertBefore($offsetJob, $order, 'tmp');
 
 
                 // find offset of old predecessor we copied
@@ -98,36 +103,6 @@ class AdretailController extends Controller
         }
 
         return $order;
-    }
-
-    /**
-     * Inserts a new value before the key in the array.
-     *
-     * The key to insert before.
-     *  @param $key
-     * An array to insert in to.
-     *  @param array $array
-     * An value to insert.
-     *  @param $new_value
-     * The new array if the key exists, FALSE otherwise.
-     *  @return array|false
-     */
-    private function arrayInsertBefore($key, array $array, $new_value) {
-        if (array_key_exists($key, $array)) {
-            $i = 0;
-            $new = array();
-            foreach ($array as $k => $value) {
-                if ($k === $key) {
-                    $new[$i] = $new_value;
-                    $i++;
-                }
-                $new[$i] = $value;
-
-                $i++;
-            }
-            return $new;
-        }
-        return false;
     }
 
     /**
