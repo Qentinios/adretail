@@ -8,6 +8,7 @@ use Session;
 
 class AdretailController extends Controller
 {
+    /** AdretailService $adretailService */
     protected $adretailService;
 
     public function __construct(AdretailService $adretailService)
@@ -72,6 +73,11 @@ class AdretailController extends Controller
         return $jobs;
     }
 
+    /**
+     * Return jobs in correct order
+     * @param $jobs
+     * @return array
+     */
     private function orderJobs($jobs)
     {
         // create array of "a b c d e f"
